@@ -87,12 +87,6 @@
               🗑️ Xóa dữ liệu cũ (>6 tháng)
             </button>
             <button id="exportBtn" class="btn btn-info">📊 Xuất báo cáo</button>
-            <button id="backupVanBtn" class="btn btn-danger">
-              💾 Backup & Xóa nợ Văn
-            </button>
-            <button id="clearMinhBtn" class="btn btn-success">
-              🆕 Reset nợ Minh (người mới)
-            </button>
             <div class="data-stats">
               <small id="dataStats">Đang tải thống kê...</small>
             </div>
@@ -640,142 +634,6 @@
           }
         }
 
-        async backupAndClearVanData() {
-          try {
-            // Backup nợ của Văn trước khi xóa
-            const vanDebts = {};
-            const vanTransactions = {};
-
-            // Lấy tất cả nợ liên quan đến C (Văn)
-            Object.entries(this.debts).forEach(([key, amount]) => {
-              if (key.includes("C_") || key.includes("_C")) {
-                vanDebts[key] = amount;
-              }
-            });
-
-            // Lấy tất cả giao dịch của Văn
-            Object.entries(this.transactions).forEach(([id, transaction]) => {
-              if (
-                transaction.payer === "C" ||
-                transaction.sharedWith.includes("C")
-              ) {
-                vanTransactions[id] = transaction;
-              }
-            });
-
-            const backupData = {
-              memberName: "Văn",
-              account: "0877988260",
-              bank: "VietinBank",
-              bankCode: "970415",
-              backupDate: new Date().toLocaleString("vi-VN"),
-              debts: vanDebts,
-              transactions: vanTransactions,
-              totalDebtCount: Object.keys(vanDebts).length,
-              totalTransactionCount: Object.keys(vanTransactions).length,
-            };
-
-            // Download backup file
-            const backupJson = JSON.stringify(backupData, null, 2);
-            const blob = new Blob([backupJson], { type: "application/json" });
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement("a");
-            a.href = url;
-            a.download = `backup-van-${Date.now()}.json`;
-            a.click();
-            window.URL.revokeObjectURL(url);
-
-            // Xóa tất cả nợ của Văn khỏi Firebase
-            const deletePromises = [];
-            Object.keys(vanDebts).forEach((debtKey) => {
-              deletePromises.push(this.debtsRef.child(debtKey).remove());
-            });
-
-            // Xóa tất cả giao dịch của Văn
-            Object.keys(vanTransactions).forEach((transactionId) => {
-              deletePromises.push(
-                this.transactionsRef.child(transactionId).remove(),
-              );
-            });
-
-            await Promise.all(deletePromises);
-            await this.loadData();
-            this.updateDataStats();
-
-            alert(
-              `✅ Đã backup thành công!\n\n📁 File backup: backup-van-${Date.now()}.json\n💰 ${Object.keys(vanDebts).length} khoản nợ\n📊 ${Object.keys(vanTransactions).length} giao dịch\n\n🗑️ Đã xóa toàn bộ data của Văn khỏi hệ thống!`,
-            );
-          } catch (error) {
-            console.error("Lỗi backup Văn:", error);
-            alert("Có lỗi khi backup dữ liệu Văn: " + error.message);
-          }
-        }
-
-        async clearMinhDebt() {
-          try {
-            // Tìm tất cả nợ liên quan đến C (Minh)
-            const minhDebts = {};
-            Object.entries(this.debts).forEach(([key, amount]) => {
-              if (key.includes("C_") || key.includes("_C")) {
-                minhDebts[key] = amount;
-              }
-            });
-
-            if (Object.keys(minhDebts).length === 0) {
-              alert("Minh hiện không có khoản nợ nào!");
-              return;
-            }
-
-            const debtSummary = Object.entries(minhDebts)
-              .map(([key, amount]) => {
-                const [debtor, creditor] = key.split("_");
-                if (debtor === "C") {
-                  return `  • Minh nợ ${MEMBERS[creditor].name}: ${formatCurrency(amount)}`;
-                } else {
-                  return `  • ${MEMBERS[debtor].name} nợ Minh: ${formatCurrency(amount)}`;
-                }
-              })
-              .join("\n");
-
-            if (
-              confirm(
-                `🆕 RESET NỢ CHO NGƯỜI MỚI - MINH\n\nSẽ xóa tất cả khoản nợ của Minh:\n\n${debtSummary}\n\n⚠️ Minh sẽ bắt đầu với thông tin nợ trắng!\n\nXác nhận?`,
-              )
-            ) {
-              // Xóa tất cả nợ của Minh
-              const deletePromises = Object.keys(minhDebts).map((debtKey) =>
-                this.debtsRef.child(debtKey).remove(),
-              );
-
-              await Promise.all(deletePromises);
-
-              // Ghi log
-              const logTransaction = {
-                id: Date.now().toString(),
-                item: "🆕 Reset nợ cho người mới - Minh",
-                amount: 0,
-                payer: "SYSTEM",
-                sharedWith: ["C"],
-                timestamp: Date.now(),
-                type: "system",
-              };
-
-              await this.transactionsRef
-                .child(logTransaction.id)
-                .set(logTransaction);
-              await this.loadData();
-              this.updateDataStats();
-
-              alert(
-                `✅ Đã reset thành công!\n\n🆕 Minh giờ có thông tin nợ trắng\n🗑️ Đã xóa ${Object.keys(minhDebts).length} khoản nợ cũ`,
-              );
-            }
-          } catch (error) {
-            console.error("Lỗi reset Minh:", error);
-            alert("Có lỗi khi reset nợ Minh: " + error.message);
-          }
-        }
-
         exportReport() {
           const transactions = Object.values(this.transactions);
           const report = transactions.map((t) => ({
@@ -1008,20 +866,6 @@
           document.getElementById("exportBtn").addEventListener("click", () => {
             this.exportReport();
           });
-
-          // Backup Văn button
-          document
-            .getElementById("backupVanBtn")
-            .addEventListener("click", () => {
-              this.backupAndClearVanData();
-            });
-
-          // Clear Minh debt button
-          document
-            .getElementById("clearMinhBtn")
-            .addEventListener("click", () => {
-              this.clearMinhDebt();
-            });
 
           // Expense form
           document
@@ -1361,34 +1205,6 @@
         width: 100%;
         font-size: 0.85rem;
         padding: 0.6rem;
-      }
-
-      #backupVanBtn {
-        background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
-        border: none;
-        border-radius: 6px;
-        color: white;
-        font-weight: 600;
-      }
-
-      #backupVanBtn:hover {
-        background: linear-gradient(135deg, #b91c1c 0%, #991b1b 100%);
-        transform: translateY(-1px);
-        box-shadow: 0 3px 10px rgba(220, 38, 38, 0.4);
-      }
-
-      #clearMinhBtn {
-        background: linear-gradient(135deg, #059669 0%, #047857 100%);
-        border: none;
-        border-radius: 6px;
-        color: white;
-        font-weight: 600;
-      }
-
-      #clearMinhBtn:hover {
-        background: linear-gradient(135deg, #047857 0%, #065f46 100%);
-        transform: translateY(-1px);
-        box-shadow: 0 3px 10px rgba(5, 150, 105, 0.4);
       }
 
       /* Download QR Button - STYLE MỚI */
