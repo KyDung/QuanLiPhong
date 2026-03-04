@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Nước rửa bát - Quản lý nhà chung</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header>
+      <nav class="navbar">
+        <div class="nav-brand">
+          <h2>🏠 Quản lý nhà chung</h2>
+        </div>
+        <ul class="nav-menu">
+          <li><a href="index.html">🏠 Trang chủ</a></li>
+          <li><a href="water.html">💧 Đổi nước</a></li>
+          <li><a href="toothpaste.html">🦷 Kem đánh răng</a></li>
+          <li><a href="dishwash.html" class="active">🧽 Nước rửa bát</a></li>
+          <li><a href="debt.html">💰 Tính nợ</a></li>
+        </ul>
+      </nav>
+    </header>
+
+    <main class="container">
+      <div class="page-header">
+        <h1>🧽 Quản lý nước rửa bát</h1>
+      </div>
+
+      <div class="rotation-card">
+        <div class="item-image">
+          <img
+            src="/placeholder.svg?height=200&width=200"
+            alt="Nước rửa bát"
+            class="item-img"
+          />
+        </div>
+
+        <div class="rotation-info">
+          <div class="info-item">
+            <label>Người mua trước:</label>
+            <span id="previousPerson">Đang tải...</span>
+          </div>
+
+          <div class="info-item current">
+            <label>Người đang mua:</label>
+            <span id="currentPerson">Đang tải...</span>
+          </div>
+
+          <div class="info-item">
+            <label>Người sẽ mua kế tiếp:</label>
+            <span id="nextPerson">Đang tải...</span>
+          </div>
+        </div>
+
+        <div class="action-section">
+          <button id="completeBtn" class="btn btn-success">✅ Đã mua</button>
+        </div>
+      </div>
+
+      <div class="history-section">
+        <h3>Lịch sử mua nước rửa bát</h3>
+        <div id="historyList" class="history-list">
+          <p>Đang tải lịch sử...</p>
+        </div>
+      </div>
+    </main>
+
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <script>
+      // Cấu hình Firebase
+      const firebaseConfig = {
+        apiKey: "AIzaSyBb9dnBAgu7YBSnaRbty5CxPzM3Dvj-gi0",
+        authDomain: "webtinhno.firebaseapp.com",
+        databaseURL:
+          "https://webtinhno-default-rtdb.asia-southeast1.firebasedatabase.app",
+        projectId: "webtinhno",
+        storageBucket: "webtinhno.firebasestorage.app",
+        messagingSenderId: "816939347254",
+        appId: "1:816939347254:web:b684dcbbcb2bbaf4c95797",
+      };
+
+      // Khởi tạo Firebase
+      firebase.initializeApp(firebaseConfig);
+      const database = firebase.database();
+
+      // Danh sách thành viên
+      const MEMBERS = {
+        A: "Dũng",
+        B: "Quang",
+        C: "Minh",
+        D: "Cường",
+      };
+
+      function formatDate(timestamp) {
+        const date = new Date(timestamp);
+        return date.toLocaleString("vi-VN");
+      }
+
+      // Quản lý nước rửa bát
+      class DishwashManager {
+        constructor() {
+          this.dbRef = database.ref("dishwashRotation");
+          this.init();
+        }
+
+        async init() {
+          try {
+            console.log("Đang khởi tạo DishwashManager...");
+
+            const snapshot = await this.dbRef.once("value");
+            if (!snapshot.exists()) {
+              console.log("Tạo dữ liệu mặc định...");
+              await this.dbRef.set({
+                people: ["A", "B", "C", "D"],
+                currentIndex: 0,
+                history: [],
+              });
+            }
+
+            this.loadData();
+            this.setupEventListeners();
+          } catch (error) {
+            console.error("Lỗi khởi tạo:", error);
+            alert("Lỗi kết nối Firebase: " + error.message);
+          }
+        }
+
+        async loadData() {
+          try {
+            const snapshot = await this.dbRef.once("value");
+            const data = snapshot.val();
+
+            console.log("Dữ liệu từ Firebase:", data);
+
+            if (data) {
+              this.updateDisplay(data);
+              this.loadHistory(data.history || []);
+            }
+          } catch (error) {
+            console.error("Lỗi tải dữ liệu:", error);
+          }
+        }
+
+        updateDisplay(data) {
+          const { people, currentIndex } = data;
+          const currentPerson = people[currentIndex];
+          const previousIndex =
+            (currentIndex - 1 + people.length) % people.length;
+          const nextIndex = (currentIndex + 1) % people.length;
+
+          document.getElementById("previousPerson").textContent =
+            MEMBERS[people[previousIndex]];
+          document.getElementById("currentPerson").textContent =
+            MEMBERS[currentPerson];
+          document.getElementById("nextPerson").textContent =
+            MEMBERS[people[nextIndex]];
+        }
+
+        loadHistory(history) {
+          const historyList = document.getElementById("historyList");
+
+          if (!history || history.length === 0) {
+            historyList.innerHTML = "<p>Chưa có lịch sử mua nước rửa bát</p>";
+            return;
+          }
+
+          const sortedHistory = history.sort(
+            (a, b) => b.timestamp - a.timestamp,
+          );
+
+          historyList.innerHTML = sortedHistory
+            .map(
+              (item) => `
+                    <div class="history-item">
+                        <span><strong>${MEMBERS[item.by]}</strong> đã mua nước rửa bát</span>
+                        <span>${formatDate(item.timestamp)}</span>
+                    </div>
+                `,
+            )
+            .join("");
+        }
+
+        async completeRotation() {
+          try {
+            const snapshot = await this.dbRef.once("value");
+            const data = snapshot.val();
+
+            if (data) {
+              const { people, currentIndex, history = [] } = data;
+              const currentPerson = people[currentIndex];
+              const newIndex = (currentIndex + 1) % people.length;
+
+              const newHistoryItem = {
+                by: currentPerson,
+                timestamp: Date.now(),
+              };
+
+              const updatedHistory = [newHistoryItem, ...history];
+
+              await this.dbRef.update({
+                currentIndex: newIndex,
+                history: updatedHistory,
+              });
+
+              this.loadData();
+              alert(
+                `${MEMBERS[currentPerson]} đã hoàn thành việc mua nước rửa bát!`,
+              );
+            }
+          } catch (error) {
+            console.error("Lỗi cập nhật:", error);
+            alert("Có lỗi xảy ra: " + error.message);
+          }
+        }
+
+        setupEventListeners() {
+          document
+            .getElementById("completeBtn")
+            .addEventListener("click", () => {
+              if (confirm("Xác nhận đã mua nước rửa bát?")) {
+                this.completeRotation();
+              }
+            });
+        }
+      }
+
+      // Khởi tạo khi trang được tải
+      document.addEventListener("DOMContentLoaded", () => {
+        new DishwashManager();
+      });
+    </script>
+  </body>
+</html>

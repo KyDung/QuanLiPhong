@@ -1,0 +1,1271 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tính nợ - Quản lý nhà chung</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header>
+      <nav class="navbar">
+        <div class="nav-brand">
+          <h2>🏠 Quản lý nhà chung</h2>
+        </div>
+        <ul class="nav-menu">
+          <li><a href="index.html">🏠 Trang chủ</a></li>
+          <li><a href="water.html">💧 Đổi nước</a></li>
+          <li><a href="toothpaste.html">🦷 Kem đánh răng</a></li>
+          <li><a href="dishwash.html">🧽 Nước rửa bát</a></li>
+          <li><a href="debt.html" class="active">💰 Tính nợ</a></li>
+        </ul>
+      </nav>
+    </header>
+
+    <main class="container debt-container">
+      <div class="page-header">
+        <h1>💰 Quản lý tính nợ</h1>
+      </div>
+
+      <div class="debt-layout">
+        <div class="sidebar">
+          <h3>Danh sách thành viên</h3>
+          <div class="member-list">
+            <div class="member-item active" data-member="A">
+              <span class="member-name">Dũng</span>
+            </div>
+            <div class="member-item" data-member="B">
+              <span class="member-name">Quang</span>
+            </div>
+            <div class="member-item" data-member="C">
+              <span class="member-name">Minh</span>
+            </div>
+            <div class="member-item" data-member="D">
+              <span class="member-name">Cường</span>
+            </div>
+          </div>
+
+          <div class="account-info">
+            <h4>💳 Thông tin tài khoản</h4>
+            <div id="selectedMemberAccount" class="account-details">
+              <div class="account-item">
+                <label>Tên tài khoản:</label>
+                <span id="accountName">Dũng</span>
+              </div>
+              <div class="account-item">
+                <label>Số tài khoản:</label>
+                <div class="account-number">
+                  <span id="accountNumber">1234567890</span>
+                  <button class="copy-btn" onclick="copyAccountNumber()">
+                    📋
+                  </button>
+                </div>
+              </div>
+              <div class="account-item">
+                <label>Ngân hàng:</label>
+                <span id="bankName">Vietcombank</span>
+              </div>
+              <div class="qr-section">
+                <img
+                  id="qrCode"
+                  src="/placeholder.svg"
+                  alt="QR Code"
+                  class="qr-image"
+                />
+                <button class="btn-download-qr" onclick="downloadQR()">
+                  📥 Tải QR về
+                </button>
+                <p class="qr-note">Quét mã để chuyển tiền</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Thêm phần quản lý dữ liệu -->
+          <div class="data-management">
+            <h4>Quản lý dữ liệu</h4>
+            <button id="cleanupBtn" class="btn btn-warning">
+              🗑️ Xóa dữ liệu cũ (>6 tháng)
+            </button>
+            <button id="exportBtn" class="btn btn-info">📊 Xuất báo cáo</button>
+            <div class="data-stats">
+              <small id="dataStats">Đang tải thống kê...</small>
+            </div>
+          </div>
+
+          <div class="calculator">
+            <h4>🧮 Máy tính</h4>
+            <div class="calc-display">
+              <input type="text" id="calcDisplay" readonly value="0" />
+            </div>
+            <div class="calc-buttons">
+              <button class="calc-btn calc-clear" onclick="clearCalc()">
+                C
+              </button>
+              <button class="calc-btn calc-operator" onclick="appendCalc('/')">
+                /
+              </button>
+              <button class="calc-btn calc-operator" onclick="appendCalc('*')">
+                ×
+              </button>
+              <button class="calc-btn calc-operator" onclick="deleteLast()">
+                ⌫
+              </button>
+
+              <button class="calc-btn calc-number" onclick="appendCalc('7')">
+                7
+              </button>
+              <button class="calc-btn calc-number" onclick="appendCalc('8')">
+                8
+              </button>
+              <button class="calc-btn calc-number" onclick="appendCalc('9')">
+                9
+              </button>
+              <button class="calc-btn calc-operator" onclick="appendCalc('-')">
+                -
+              </button>
+
+              <button class="calc-btn calc-number" onclick="appendCalc('4')">
+                4
+              </button>
+              <button class="calc-btn calc-number" onclick="appendCalc('5')">
+                5
+              </button>
+              <button class="calc-btn calc-number" onclick="appendCalc('6')">
+                6
+              </button>
+              <button class="calc-btn calc-operator" onclick="appendCalc('+')">
+                +
+              </button>
+
+              <button class="calc-btn calc-number" onclick="appendCalc('1')">
+                1
+              </button>
+              <button class="calc-btn calc-number" onclick="appendCalc('2')">
+                2
+              </button>
+              <button class="calc-btn calc-number" onclick="appendCalc('3')">
+                3
+              </button>
+              <button
+                class="calc-btn calc-equals"
+                onclick="calculateResult()"
+                rowspan="2"
+              >
+                =
+              </button>
+
+              <button
+                class="calc-btn calc-number calc-zero"
+                onclick="appendCalc('0')"
+              >
+                0
+              </button>
+              <button class="calc-btn calc-number" onclick="appendCalc('.')">
+                .
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="main-content">
+          <div class="member-info">
+            <h2 id="selectedMemberName">Dũng</h2>
+
+            <div class="debt-summary">
+              <div class="debt-section">
+                <h3>💸 Những người nợ họ</h3>
+                <div id="owedToThem" class="debt-list">
+                  <p>Đang tải...</p>
+                </div>
+              </div>
+
+              <div class="debt-section">
+                <h3>💳 Họ đang nợ</h3>
+                <div id="theyOwe" class="debt-list">
+                  <p>Đang tải...</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="expense-form">
+            <h3>Chia tiền mới</h3>
+            <form id="expenseForm">
+              <div class="form-group">
+                <label for="itemName">Món đồ mua:</label>
+                <input type="text" id="itemName" required />
+              </div>
+
+              <div class="form-group">
+                <label for="amount">Số tiền (VNĐ):</label>
+                <input type="number" id="amount" required min="1000" />
+              </div>
+
+              <div class="form-group">
+                <label for="payer">Người trả tiền:</label>
+                <select id="payer" required>
+                  <option value="A">Dũng</option>
+                  <option value="B">Quang</option>
+                  <option value="C">Minh</option>
+                  <option value="D">Cường</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label>Chia với (chọn tối đa 3 người):</label>
+                <div class="checkbox-group">
+                  <label><input type="checkbox" value="A" /> Dũng</label>
+                  <label><input type="checkbox" value="B" /> Quang</label>
+                  <label><input type="checkbox" value="C" /> Minh</label>
+                  <label><input type="checkbox" value="D" /> Cường</label>
+                </div>
+              </div>
+
+              <button type="submit" class="btn btn-primary">Chia tiền</button>
+            </form>
+          </div>
+
+          <div class="manual-debt">
+            <h3>Trừ nợ thủ công</h3>
+            <form id="manualDebtForm">
+              <div class="form-row">
+                <select id="debtor" required>
+                  <option value="">Người nợ</option>
+                  <option value="A">Dũng</option>
+                  <option value="B">Quang</option>
+                  <option value="C">Minh</option>
+                  <option value="D">Cường</option>
+                </select>
+
+                <select id="creditor" required>
+                  <option value="">Người cho nợ</option>
+                  <option value="A">Dũng</option>
+                  <option value="B">Quang</option>
+                  <option value="C">Minh</option>
+                  <option value="D">Cường</option>
+                </select>
+
+                <input
+                  type="number"
+                  id="debtAmount"
+                  placeholder="Số tiền trả"
+                  required
+                  min="1000"
+                />
+
+                <div class="form-row-buttons">
+                  <button type="submit" class="btn btn-secondary">
+                    Trừ nợ
+                  </button>
+                  <button
+                    type="button"
+                    id="clearAllDebtBtn"
+                    class="btn btn-danger"
+                  >
+                    🗑️ Xóa toàn bộ nợ
+                  </button>
+                </div>
+              </div>
+            </form>
+          </div>
+
+          <div class="loan-money">
+            <h3>Nợ tiền (Cho vay)</h3>
+            <form id="loanForm">
+              <div class="form-row">
+                <select id="lender" required>
+                  <option value="">Người cho vay</option>
+                  <option value="A">Dũng</option>
+                  <option value="B">Quang</option>
+                  <option value="C">Minh</option>
+                  <option value="D">Cường</option>
+                </select>
+
+                <select id="borrower" required>
+                  <option value="">Người vay</option>
+                  <option value="A">Dũng</option>
+                  <option value="B">Quang</option>
+                  <option value="C">Minh</option>
+                  <option value="D">Cường</option>
+                </select>
+
+                <input
+                  type="number"
+                  id="loanAmount"
+                  placeholder="Số tiền cho vay"
+                  required
+                  min="1000"
+                />
+
+                <div class="form-row-buttons">
+                  <button type="submit" class="btn btn-primary">Ghi nợ</button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <div class="transaction-history">
+        <h3>Lịch sử giao dịch</h3>
+        <div class="history-filter">
+          <select id="timeFilter">
+            <option value="all">Tất cả</option>
+            <option value="30">30 ngày gần nhất</option>
+            <option value="90">3 tháng gần nhất</option>
+            <option value="180">6 tháng gần nhất</option>
+          </select>
+        </div>
+        <div id="transactionList" class="transaction-list">
+          <p>Đang tải lịch sử...</p>
+        </div>
+      </div>
+    </main>
+
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <script>
+      // Cấu hình Firebase
+      const firebaseConfig = {
+        apiKey: "AIzaSyBb9dnBAgu7YBSnaRbty5CxPzM3Dvj-gi0",
+        authDomain: "webtinhno.firebaseapp.com",
+        databaseURL:
+          "https://webtinhno-default-rtdb.asia-southeast1.firebasedatabase.app",
+        projectId: "webtinhno",
+        storageBucket: "webtinhno.firebasestorage.app",
+        messagingSenderId: "816939347254",
+        appId: "1:816939347254:web:b684dcbbcb2bbaf4c95797",
+      };
+
+      // Khởi tạo Firebase
+      firebase.initializeApp(firebaseConfig);
+      const database = firebase.database();
+
+      // Danh sách thành viên với thông tin ngân hàng
+      const MEMBERS = {
+        A: {
+          name: "Dũng",
+          account: "0368306901",
+          bank: "MBBank",
+          bankCode: "970422",
+        },
+        B: {
+          name: "Quang",
+          account: "1047435395",
+          bank: "Vietcombank",
+          bankCode: "970436",
+        },
+        C: {
+          name: "Minh",
+          account: "1027754014",
+          bank: "Vietcombank",
+          bankCode: "970436",
+        },
+        D: {
+          name: "Cường",
+          account: "1048146800",
+          bank: "Vietcombank",
+          bankCode: "970436",
+        },
+      };
+
+      function formatDate(timestamp) {
+        const date = new Date(timestamp);
+        return date.toLocaleString("vi-VN");
+      }
+
+      function formatCurrency(amount) {
+        return new Intl.NumberFormat("vi-VN", {
+          style: "currency",
+          currency: "VND",
+        }).format(amount);
+      }
+
+      // Tạo VietQR URL thật
+      function generateVietQR(
+        bankCode,
+        accountNumber,
+        amount = "",
+        message = "",
+      ) {
+        const baseUrl = "https://img.vietqr.io/image/";
+        let url = `${baseUrl}${bankCode}-${accountNumber}-compact2.png`;
+
+        const params = new URLSearchParams();
+        if (amount) params.append("amount", amount);
+        if (message) params.append("addInfo", message);
+
+        if (params.toString()) {
+          url += "?" + params.toString();
+        }
+
+        return url;
+      }
+
+      // Global variable để lưu DebtManager instance
+      let debtManager;
+
+      // Quản lý tính nợ
+      class DebtManager {
+        constructor() {
+          this.debtsRef = database.ref("debts");
+          this.transactionsRef = database.ref("transactions");
+          this.selectedMember = "A";
+          this.timeFilter = "all";
+          this.init();
+        }
+
+        async init() {
+          try {
+            console.log("Đang khởi tạo DebtManager...");
+            await this.loadData();
+            this.setupEventListeners();
+            this.updateDataStats();
+            this.updateQRCode();
+          } catch (error) {
+            console.error("Lỗi khởi tạo:", error);
+            alert("Lỗi kết nối Firebase: " + error.message);
+          }
+        }
+
+        async loadData() {
+          try {
+            const [debtsSnapshot, transactionsSnapshot] = await Promise.all([
+              this.debtsRef.once("value"),
+              this.transactionsRef.once("value"),
+            ]);
+
+            this.debts = debtsSnapshot.val() || {};
+            this.transactions = transactionsSnapshot.val() || {};
+
+            this.updateMemberInfo();
+            this.loadTransactionHistory();
+          } catch (error) {
+            console.error("Lỗi tải dữ liệu:", error);
+          }
+        }
+
+        updateMemberInfo() {
+          const memberName = MEMBERS[this.selectedMember].name;
+          document.getElementById("selectedMemberName").textContent =
+            memberName;
+
+          const owedToThem = [];
+          const theyOwe = [];
+
+          Object.keys(this.debts).forEach((key) => {
+            const amount = this.debts[key];
+            if (amount > 0) {
+              const [debtor, creditor] = key.split("_");
+
+              if (creditor === this.selectedMember) {
+                owedToThem.push({
+                  person: MEMBERS[debtor].name,
+                  amount: amount,
+                });
+              } else if (debtor === this.selectedMember) {
+                theyOwe.push({
+                  person: MEMBERS[creditor].name,
+                  amount: amount,
+                });
+              }
+            }
+          });
+
+          this.displayDebtList("owedToThem", owedToThem);
+          this.displayDebtList("theyOwe", theyOwe);
+          this.updateAccountInfo();
+          this.updateQRCode();
+        }
+
+        updateAccountInfo() {
+          const member = MEMBERS[this.selectedMember];
+          document.getElementById("accountName").textContent = member.name;
+          document.getElementById("accountNumber").textContent = member.account;
+          document.getElementById("bankName").textContent = member.bank;
+        }
+
+        updateQRCode() {
+          const member = MEMBERS[this.selectedMember];
+          const qrUrl = generateVietQR(
+            member.bankCode,
+            member.account,
+            "",
+            `Chuyen tien cho ${member.name}`,
+          );
+          document.getElementById("qrCode").src = qrUrl;
+        }
+
+        displayDebtList(elementId, debtList) {
+          const element = document.getElementById(elementId);
+
+          if (debtList.length === 0) {
+            element.innerHTML = "<p>Không có khoản nợ nào</p>";
+            return;
+          }
+
+          element.innerHTML = debtList
+            .map(
+              (debt) => `
+                    <div class="debt-item">
+                        <span>${debt.person}</span>
+                        <span class="debt-amount">${formatCurrency(
+                          debt.amount,
+                        )}</span>
+                    </div>
+                `,
+            )
+            .join("");
+        }
+
+        loadTransactionHistory() {
+          const transactionList = document.getElementById("transactionList");
+          const transactionArray = Object.values(this.transactions);
+
+          if (transactionArray.length === 0) {
+            transactionList.innerHTML = "<p>Chưa có giao dịch nào</p>";
+            return;
+          }
+
+          let filteredTransactions = transactionArray;
+          if (this.timeFilter !== "all") {
+            const cutoffTime =
+              Date.now() - parseInt(this.timeFilter) * 24 * 60 * 60 * 1000;
+            filteredTransactions = transactionArray.filter(
+              (t) => t.timestamp > cutoffTime,
+            );
+          }
+
+          const sortedTransactions = filteredTransactions.sort(
+            (a, b) => b.timestamp - a.timestamp,
+          );
+
+          transactionList.innerHTML = sortedTransactions
+            .map((transaction) => {
+              let description = "";
+
+              if (transaction.type === "loan") {
+                description = `${MEMBERS[transaction.payer].name} cho ${
+                  MEMBERS[transaction.sharedWith[0]].name
+                } vay tiền`;
+              } else if (transaction.type === "payment") {
+                description = `${MEMBERS[transaction.payer].name} trả nợ cho ${
+                  MEMBERS[transaction.sharedWith[0]].name
+                }`;
+              } else if (transaction.type === "system") {
+                description = `Hệ thống xử lý`;
+              } else {
+                description = `${
+                  MEMBERS[transaction.payer].name
+                } trả tiền • Chia với: ${transaction.sharedWith
+                  .map((p) => MEMBERS[p].name)
+                  .join(", ")}`;
+              }
+
+              return `
+                        <div class="transaction-item">
+                            <div class="transaction-header">
+                                <span class="transaction-title">${
+                                  transaction.item
+                                }</span>
+                                <span class="transaction-amount">${formatCurrency(
+                                  transaction.amount,
+                                )}</span>
+                            </div>
+                            <div class="transaction-details">
+                                ${description} • ${formatDate(
+                                  transaction.timestamp,
+                                )}
+                            </div>
+                        </div>
+                    `;
+            })
+            .join("");
+        }
+
+        updateDataStats() {
+          const transactionCount = Object.keys(this.transactions).length;
+          const oldestTransaction = Math.min(
+            ...Object.values(this.transactions).map((t) => t.timestamp),
+          );
+          const oldestDate = oldestTransaction
+            ? new Date(oldestTransaction).toLocaleDateString("vi-VN")
+            : "N/A";
+
+          document.getElementById("dataStats").innerHTML = `
+                    ${transactionCount} giao dịch • Cũ nhất: ${oldestDate}
+                `;
+        }
+
+        async cleanupOldData() {
+          try {
+            const sixMonthsAgo = Date.now() - 6 * 30 * 24 * 60 * 60 * 1000;
+            const transactionsToDelete = [];
+
+            Object.entries(this.transactions).forEach(([id, transaction]) => {
+              if (transaction.timestamp < sixMonthsAgo) {
+                transactionsToDelete.push(id);
+              }
+            });
+
+            if (transactionsToDelete.length === 0) {
+              alert("Không có dữ liệu cũ hơn 6 tháng để xóa!");
+              return;
+            }
+
+            if (
+              confirm(
+                `Sẽ xóa ${transactionsToDelete.length} giao dịch cũ hơn 6 tháng. Tiếp tục?`,
+              )
+            ) {
+              const deletePromises = transactionsToDelete.map((id) =>
+                this.transactionsRef.child(id).remove(),
+              );
+
+              await Promise.all(deletePromises);
+              await this.loadData();
+              this.updateDataStats();
+
+              alert(`Đã xóa ${transactionsToDelete.length} giao dịch cũ!`);
+            }
+          } catch (error) {
+            console.error("Lỗi dọn dẹp:", error);
+            alert("Có lỗi khi dọn dẹp dữ liệu!");
+          }
+        }
+
+        exportReport() {
+          const transactions = Object.values(this.transactions);
+          const report = transactions.map((t) => ({
+            Ngày: formatDate(t.timestamp),
+            "Món đồ": t.item,
+            "Số tiền": t.amount,
+            "Người trả": MEMBERS[t.payer].name,
+            "Chia với": t.sharedWith.map((p) => MEMBERS[p].name).join(", "),
+          }));
+
+          const csv = this.convertToCSV(report);
+          this.downloadCSV(csv, "bao-cao-giao-dich.csv");
+        }
+
+        convertToCSV(data) {
+          const headers = Object.keys(data[0]).join(",");
+          const rows = data.map((row) => Object.values(row).join(","));
+          return [headers, ...rows].join("\n");
+        }
+
+        downloadCSV(csv, filename) {
+          const blob = new Blob([csv], { type: "text/csv" });
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = filename;
+          a.click();
+          window.URL.revokeObjectURL(url);
+        }
+
+        async addExpense(expenseData) {
+          try {
+            const { itemName, amount, payer, sharedWith } = expenseData;
+            const totalPeople = sharedWith.length + 1;
+            const perPerson = Math.floor(amount / totalPeople);
+
+            const transactionId = Date.now().toString();
+
+            const transaction = {
+              id: transactionId,
+              item: itemName,
+              amount: amount,
+              payer: payer,
+              sharedWith: sharedWith,
+              perPerson: perPerson,
+              timestamp: Date.now(),
+            };
+
+            await this.transactionsRef.child(transactionId).set(transaction);
+
+            const debtUpdates = {};
+
+            sharedWith.forEach((person) => {
+              if (person !== payer) {
+                const debtKey = `${person}_${payer}`;
+                const currentDebt = this.debts[debtKey] || 0;
+                debtUpdates[debtKey] = currentDebt + perPerson;
+              }
+            });
+
+            if (Object.keys(debtUpdates).length > 0) {
+              await this.debtsRef.update(debtUpdates);
+            }
+
+            await this.loadData();
+            this.updateDataStats();
+            alert("Đã chia tiền thành công!");
+          } catch (error) {
+            console.error("Lỗi thêm chi phí:", error);
+            alert("Có lỗi xảy ra: " + error.message);
+          }
+        }
+
+        async payDebt(debtor, creditor, amount) {
+          try {
+            const debtKey = `${debtor}_${creditor}`;
+            const currentDebt = this.debts[debtKey] || 0;
+
+            if (currentDebt < amount) {
+              alert("Số tiền trả lớn hơn số nợ hiện tại!");
+              return;
+            }
+
+            const newDebt = currentDebt - amount;
+
+            if (newDebt === 0) {
+              await this.debtsRef.child(debtKey).remove();
+            } else {
+              await this.debtsRef.child(debtKey).set(newDebt);
+            }
+
+            const transactionId = Date.now().toString();
+            const transaction = {
+              id: transactionId,
+              item: "Trả nợ",
+              amount: amount,
+              payer: debtor,
+              sharedWith: [creditor],
+              perPerson: amount,
+              timestamp: Date.now(),
+              type: "payment",
+            };
+
+            await this.transactionsRef.child(transactionId).set(transaction);
+
+            await this.loadData();
+            this.updateDataStats();
+            alert(
+              `${MEMBERS[debtor].name} đã trả ${formatCurrency(amount)} cho ${
+                MEMBERS[creditor].name
+              }!`,
+            );
+          } catch (error) {
+            console.error("Lỗi trả nợ:", error);
+            alert("Có lỗi xảy ra: " + error.message);
+          }
+        }
+
+        async addLoan(lender, borrower, amount) {
+          try {
+            const debtKey = `${borrower}_${lender}`;
+            const currentDebt = this.debts[debtKey] || 0;
+            const newDebt = currentDebt + amount;
+
+            await this.debtsRef.child(debtKey).set(newDebt);
+
+            const transactionId = Date.now().toString();
+            const transaction = {
+              id: transactionId,
+              item: "Nợ tiền (Cho vay)",
+              amount: amount,
+              payer: lender,
+              sharedWith: [borrower],
+              perPerson: amount,
+              timestamp: Date.now(),
+              type: "loan",
+            };
+
+            await this.transactionsRef.child(transactionId).set(transaction);
+
+            await this.loadData();
+            this.updateDataStats();
+            alert(
+              `${MEMBERS[lender].name} đã cho ${
+                MEMBERS[borrower].name
+              } vay ${formatCurrency(amount)}!`,
+            );
+          } catch (error) {
+            console.error("Lỗi khi ghi nợ:", error);
+            alert("Có lỗi xảy ra: " + error.message);
+          }
+        }
+
+        async clearAllDebt(debtor, creditor) {
+          try {
+            const debtKey = `${debtor}_${creditor}`;
+            const currentDebt = this.debts[debtKey] || 0;
+
+            if (currentDebt === 0) {
+              alert("Không có khoản nợ nào để xóa!");
+              return;
+            }
+
+            if (
+              confirm(
+                `Xác nhận xóa toàn bộ nợ ${formatCurrency(currentDebt)} của ${
+                  MEMBERS[debtor].name
+                } cho ${MEMBERS[creditor].name}?`,
+              )
+            ) {
+              await this.debtsRef.child(debtKey).remove();
+
+              const transactionId = Date.now().toString();
+              const transaction = {
+                id: transactionId,
+                item: "Xóa toàn bộ nợ",
+                amount: currentDebt,
+                payer: debtor,
+                sharedWith: [creditor],
+                perPerson: currentDebt,
+                timestamp: Date.now(),
+                type: "payment",
+              };
+
+              await this.transactionsRef.child(transactionId).set(transaction);
+
+              await this.loadData();
+              this.updateDataStats();
+              alert(
+                `Đã xóa toàn bộ nợ ${formatCurrency(currentDebt)} của ${
+                  MEMBERS[debtor].name
+                } cho ${MEMBERS[creditor].name}!`,
+              );
+            }
+          } catch (error) {
+            console.error("Lỗi xóa nợ:", error);
+            alert("Có lỗi xảy ra: " + error.message);
+          }
+        }
+
+        setupEventListeners() {
+          // Member selection
+          document.querySelectorAll(".member-item").forEach((item) => {
+            item.addEventListener("click", (e) => {
+              document
+                .querySelectorAll(".member-item")
+                .forEach((i) => i.classList.remove("active"));
+              e.currentTarget.classList.add("active");
+              this.selectedMember = e.currentTarget.dataset.member;
+              this.updateMemberInfo();
+            });
+          });
+
+          // Time filter
+          document
+            .getElementById("timeFilter")
+            .addEventListener("change", (e) => {
+              this.timeFilter = e.target.value;
+              this.loadTransactionHistory();
+            });
+
+          // Cleanup button
+          document
+            .getElementById("cleanupBtn")
+            .addEventListener("click", () => {
+              this.cleanupOldData();
+            });
+
+          // Export button
+          document.getElementById("exportBtn").addEventListener("click", () => {
+            this.exportReport();
+          });
+
+          // Expense form
+          document
+            .getElementById("expenseForm")
+            .addEventListener("submit", (e) => {
+              e.preventDefault();
+
+              const itemName = document.getElementById("itemName").value;
+              const amount = parseInt(document.getElementById("amount").value);
+              const payer = document.getElementById("payer").value;
+              const sharedWith = Array.from(
+                document.querySelectorAll('input[type="checkbox"]:checked'),
+              )
+                .map((cb) => cb.value)
+                .filter((person) => person !== payer);
+
+              if (sharedWith.length === 0) {
+                alert("Vui lòng chọn ít nhất một người để chia tiền!");
+                return;
+              }
+
+              if (sharedWith.length > 3) {
+                alert("Chỉ được chọn tối đa 3 người để chia tiền!");
+                return;
+              }
+
+              this.addExpense({
+                itemName,
+                amount,
+                payer,
+                sharedWith,
+              });
+
+              e.target.reset();
+              document
+                .querySelectorAll('input[type="checkbox"]')
+                .forEach((cb) => (cb.checked = false));
+            });
+
+          // Manual debt form
+          document
+            .getElementById("manualDebtForm")
+            .addEventListener("submit", (e) => {
+              e.preventDefault();
+
+              const debtor = document.getElementById("debtor").value;
+              const creditor = document.getElementById("creditor").value;
+              const amount = parseInt(
+                document.getElementById("debtAmount").value,
+              );
+
+              if (debtor === creditor) {
+                alert("Người nợ và người cho nợ không thể giống nhau!");
+                return;
+              }
+
+              if (
+                confirm(
+                  `Xác nhận ${MEMBERS[debtor].name} trả ${formatCurrency(
+                    amount,
+                  )} cho ${MEMBERS[creditor].name}?`,
+                )
+              ) {
+                this.payDebt(debtor, creditor, amount);
+                e.target.reset();
+              }
+            });
+
+          // Loan form
+          document
+            .getElementById("loanForm")
+            .addEventListener("submit", (e) => {
+              e.preventDefault();
+
+              const lender = document.getElementById("lender").value;
+              const borrower = document.getElementById("borrower").value;
+              const amount = parseInt(
+                document.getElementById("loanAmount").value,
+              );
+
+              if (lender === borrower) {
+                alert("Người cho vay và người vay không thể giống nhau!");
+                return;
+              }
+
+              if (
+                confirm(
+                  `Xác nhận ${MEMBERS[lender].name} cho ${
+                    MEMBERS[borrower].name
+                  } vay ${formatCurrency(amount)}?`,
+                )
+              ) {
+                this.addLoan(lender, borrower, amount);
+                e.target.reset();
+              }
+            });
+
+          // Clear all debt button
+          document
+            .getElementById("clearAllDebtBtn")
+            .addEventListener("click", () => {
+              const debtor = document.getElementById("debtor").value;
+              const creditor = document.getElementById("creditor").value;
+
+              if (!debtor || !creditor) {
+                alert("Vui lòng chọn người nợ và người cho nợ!");
+                return;
+              }
+
+              if (debtor === creditor) {
+                alert("Người nợ và người cho nợ không thể giống nhau!");
+                return;
+              }
+
+              this.clearAllDebt(debtor, creditor);
+            });
+        }
+      }
+
+      // Khởi tạo khi trang được tải
+      document.addEventListener("DOMContentLoaded", () => {
+        debtManager = new DebtManager();
+      });
+
+      // Calculator functions
+      let calcDisplay = "";
+      let shouldResetDisplay = false;
+
+      function appendCalc(value) {
+        const display = document.getElementById("calcDisplay");
+
+        if (shouldResetDisplay) {
+          display.value = "";
+          shouldResetDisplay = false;
+        }
+
+        if (display.value === "0" && value !== ".") {
+          display.value = value;
+        } else {
+          display.value += value;
+        }
+      }
+
+      function clearCalc() {
+        document.getElementById("calcDisplay").value = "0";
+        shouldResetDisplay = false;
+      }
+
+      function deleteLast() {
+        const display = document.getElementById("calcDisplay");
+        if (display.value.length > 1) {
+          display.value = display.value.slice(0, -1);
+        } else {
+          display.value = "0";
+        }
+      }
+
+      function calculateResult() {
+        const display = document.getElementById("calcDisplay");
+        try {
+          const expression = display.value.replace(/×/g, "*");
+          const result = eval(expression);
+          display.value = result;
+          shouldResetDisplay = true;
+        } catch (error) {
+          display.value = "Error";
+          shouldResetDisplay = true;
+        }
+      }
+
+      // Copy account number function
+      function copyAccountNumber() {
+        const accountNumber =
+          document.getElementById("accountNumber").textContent;
+        navigator.clipboard
+          .writeText(accountNumber)
+          .then(() => {
+            const copyBtn = document.querySelector(".copy-btn");
+            const originalText = copyBtn.textContent;
+            copyBtn.textContent = "✅";
+            setTimeout(() => {
+              copyBtn.textContent = originalText;
+            }, 2000);
+          })
+          .catch(() => {
+            alert("Không thể copy. Vui lòng copy thủ công: " + accountNumber);
+          });
+      }
+
+      // Download QR code function - TÍNH NĂNG MỚI
+      function downloadQR() {
+        const qrImage = document.getElementById("qrCode");
+        const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext("2d");
+
+        const img = new Image();
+        img.crossOrigin = "anonymous";
+        img.onload = function () {
+          canvas.width = img.width;
+          canvas.height = img.height;
+          ctx.drawImage(img, 0, 0);
+
+          const link = document.createElement("a");
+          link.download = `QR-${MEMBERS[debtManager.selectedMember].name}.png`;
+          link.href = canvas.toDataURL();
+          link.click();
+
+          // Hiển thị thông báo thành công
+          alert(
+            `Đã tải QR code của ${
+              MEMBERS[debtManager.selectedMember].name
+            } về máy!`,
+          );
+        };
+        img.onerror = function () {
+          alert("Không thể tải QR code. Vui lòng thử lại!");
+        };
+        img.src = qrImage.src;
+      }
+    </script>
+
+    <style>
+      /* Calculator Styles */
+      .calculator {
+        border-top: 2px solid #e2e8f0;
+        padding-top: 1rem;
+        margin-top: 1rem;
+      }
+
+      .calculator h4 {
+        color: #1e293b;
+        margin-bottom: 1rem;
+        font-size: 1.1rem;
+      }
+
+      .calc-display {
+        margin-bottom: 0.5rem;
+      }
+
+      .calc-display input {
+        width: 100%;
+        padding: 0.75rem;
+        border: 2px solid #e5e7eb;
+        border-radius: 8px;
+        font-size: 1.2rem;
+        text-align: right;
+        background: #f8fafc;
+        font-family: monospace;
+      }
+
+      .calc-buttons {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 0.25rem;
+      }
+
+      .calc-btn {
+        padding: 0.75rem;
+        border: none;
+        border-radius: 6px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+
+      .calc-number {
+        background: #f1f5f9;
+        color: #1e293b;
+      }
+
+      .calc-number:hover {
+        background: #e2e8f0;
+      }
+
+      .calc-operator {
+        background: #3b82f6;
+        color: white;
+      }
+
+      .calc-operator:hover {
+        background: #2563eb;
+      }
+
+      .calc-equals {
+        background: #10b981;
+        color: white;
+        grid-row: span 2;
+      }
+
+      .calc-equals:hover {
+        background: #059669;
+      }
+
+      .calc-clear {
+        background: #ef4444;
+        color: white;
+      }
+
+      .calc-clear:hover {
+        background: #dc2626;
+      }
+
+      .calc-zero {
+        grid-column: span 2;
+      }
+
+      .btn-danger {
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        color: white;
+        margin-left: 0.5rem;
+      }
+
+      .btn-danger:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);
+      }
+
+      .btn-success {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: white;
+        margin-top: 0.5rem;
+        width: 100%;
+        font-size: 0.9rem;
+        padding: 0.6rem 1rem;
+      }
+
+      .btn-success:hover {
+        background: linear-gradient(135deg, #059669 0%, #047857 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
+      }
+
+      /* Data management buttons */
+      .data-management button {
+        margin: 0.25rem 0;
+        width: 100%;
+        font-size: 0.85rem;
+        padding: 0.6rem;
+      }
+
+      /* Download QR Button - STYLE MỚI */
+      .btn-download-qr {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        padding: 0.75rem 1.5rem;
+        font-size: 0.9rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        margin: 1rem 0;
+        width: 100%;
+      }
+
+      .btn-download-qr:hover {
+        background: linear-gradient(135deg, #059669 0%, #047857 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
+      }
+
+      .btn-download-qr:active {
+        transform: translateY(0);
+      }
+
+      /* QR Section styling */
+      .qr-section {
+        text-align: center;
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid #e2e8f0;
+      }
+
+      .qr-image {
+        width: 150px;
+        height: 150px;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        margin-bottom: 1rem;
+      }
+
+      .qr-note {
+        font-size: 0.8rem;
+        color: #64748b;
+        margin: 0.5rem 0 0 0;
+      }
+
+      /* Responsive */
+      @media (max-width: 768px) {
+        .qr-image {
+          width: 120px;
+          height: 120px;
+        }
+
+        .btn-download-qr {
+          padding: 0.6rem 1rem;
+          font-size: 0.8rem;
+        }
+      }
+    </style>
+  </body>
+</html>
