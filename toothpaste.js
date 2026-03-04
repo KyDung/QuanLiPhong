@@ -20,80 +20,83 @@
 
 // Define MEMBERS and formatDate
 const MEMBERS = {
-  A: "Người A",
-  B: "Người B",
-  C: "Người C",
-  D: "Người D",
-}
+  A: "Dũng",
+  B: "Quang",
+  C: "Minh",
+  D: "Cường",
+};
 
 function formatDate(timestamp) {
-  const date = new Date(timestamp)
-  return date.toLocaleDateString() + " " + date.toLocaleTimeString()
+  const date = new Date(timestamp);
+  return date.toLocaleDateString() + " " + date.toLocaleTimeString();
 }
 
 // Quản lý kem đánh răng
 class ToothpasteManager {
   constructor() {
-    this.dbRef = firebase.database().ref("toothpasteRotation")
-    this.init()
+    this.dbRef = firebase.database().ref("toothpasteRotation");
+    this.init();
   }
 
   async init() {
     try {
       // Khởi tạo dữ liệu mặc định nếu chưa có
-      const snapshot = await this.dbRef.once("value")
+      const snapshot = await this.dbRef.once("value");
       if (!snapshot.exists()) {
         await this.dbRef.set({
           people: ["A", "B", "C", "D"],
           currentIndex: 0,
           history: [],
-        })
-        console.log("Đã khởi tạo dữ liệu mặc định cho kem đánh răng")
+        });
+        console.log("Đã khởi tạo dữ liệu mặc định cho kem đánh răng");
       }
 
-      this.loadData()
-      this.setupEventListeners()
+      this.loadData();
+      this.setupEventListeners();
     } catch (error) {
-      console.error("Lỗi khi khởi tạo:", error)
-      alert("Lỗi kết nối Firebase. Vui lòng kiểm tra cấu hình!")
+      console.error("Lỗi khi khởi tạo:", error);
+      alert("Lỗi kết nối Firebase. Vui lòng kiểm tra cấu hình!");
     }
   }
 
   async loadData() {
     try {
-      const snapshot = await this.dbRef.once("value")
-      const data = snapshot.val()
+      const snapshot = await this.dbRef.once("value");
+      const data = snapshot.val();
 
       if (data) {
-        this.updateDisplay(data)
-        this.loadHistory(data.history || [])
+        this.updateDisplay(data);
+        this.loadHistory(data.history || []);
       }
     } catch (error) {
-      console.error("Lỗi khi tải dữ liệu:", error)
+      console.error("Lỗi khi tải dữ liệu:", error);
     }
   }
 
   updateDisplay(data) {
-    const { people, currentIndex } = data
-    const currentPerson = people[currentIndex]
-    const previousIndex = (currentIndex - 1 + people.length) % people.length
-    const nextIndex = (currentIndex + 1) % people.length
+    const { people, currentIndex } = data;
+    const currentPerson = people[currentIndex];
+    const previousIndex = (currentIndex - 1 + people.length) % people.length;
+    const nextIndex = (currentIndex + 1) % people.length;
 
-    document.getElementById("previousPerson").textContent = MEMBERS[people[previousIndex]]
-    document.getElementById("currentPerson").textContent = MEMBERS[currentPerson]
-    document.getElementById("nextPerson").textContent = MEMBERS[people[nextIndex]]
+    document.getElementById("previousPerson").textContent =
+      MEMBERS[people[previousIndex]];
+    document.getElementById("currentPerson").textContent =
+      MEMBERS[currentPerson];
+    document.getElementById("nextPerson").textContent =
+      MEMBERS[people[nextIndex]];
   }
 
   loadHistory(history) {
-    const historyList = document.getElementById("historyList")
+    const historyList = document.getElementById("historyList");
 
     if (!history || history.length === 0) {
-      historyList.innerHTML = "<p>Chưa có lịch sử mua kem đánh răng</p>"
-      return
+      historyList.innerHTML = "<p>Chưa có lịch sử mua kem đánh răng</p>";
+      return;
     }
 
     // Sắp xếp theo thời gian mới nhất
-    const sortedHistory = history.sort((a, b) => b.timestamp - a.timestamp)
+    const sortedHistory = history.sort((a, b) => b.timestamp - a.timestamp);
 
     historyList.innerHTML = sortedHistory
       .map(
@@ -104,54 +107,56 @@ class ToothpasteManager {
             </div>
         `,
       )
-      .join("")
+      .join("");
   }
 
   async completeRotation() {
     try {
-      const snapshot = await this.dbRef.once("value")
-      const data = snapshot.val()
+      const snapshot = await this.dbRef.once("value");
+      const data = snapshot.val();
 
       if (data) {
-        const { people, currentIndex, history = [] } = data
-        const currentPerson = people[currentIndex]
-        const newIndex = (currentIndex + 1) % people.length
+        const { people, currentIndex, history = [] } = data;
+        const currentPerson = people[currentIndex];
+        const newIndex = (currentIndex + 1) % people.length;
 
         // Thêm vào lịch sử
         const newHistoryItem = {
           by: currentPerson,
           timestamp: Date.now(),
-        }
+        };
 
-        const updatedHistory = [newHistoryItem, ...history]
+        const updatedHistory = [newHistoryItem, ...history];
 
         // Cập nhật database
         await this.dbRef.update({
           currentIndex: newIndex,
           history: updatedHistory,
-        })
+        });
 
         // Cập nhật giao diện
-        this.loadData()
+        this.loadData();
 
-        alert(`${MEMBERS[currentPerson]} đã hoàn thành việc mua kem đánh răng!`)
+        alert(
+          `${MEMBERS[currentPerson]} đã hoàn thành việc mua kem đánh răng!`,
+        );
       }
     } catch (error) {
-      console.error("Lỗi khi cập nhật:", error)
-      alert("Có lỗi xảy ra. Vui lòng thử lại!")
+      console.error("Lỗi khi cập nhật:", error);
+      alert("Có lỗi xảy ra. Vui lòng thử lại!");
     }
   }
 
   setupEventListeners() {
     document.getElementById("completeBtn").addEventListener("click", () => {
       if (confirm("Xác nhận đã mua kem đánh răng?")) {
-        this.completeRotation()
+        this.completeRotation();
       }
-    })
+    });
   }
 }
 
 // Khởi tạo khi trang được tải
 document.addEventListener("DOMContentLoaded", () => {
-  new ToothpasteManager()
-})
+  new ToothpasteManager();
+});

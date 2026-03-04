@@ -11,7 +11,7 @@ const firebaseConfig = {
   storageBucket: "your-project.appspot.com",
   messagingSenderId: "123456789",
   appId: "your-app-id",
-}
+};
 
 // Khởi tạo Firebase
 // firebase.initializeApp(firebaseConfig); // Avoid adding this line
@@ -23,84 +23,84 @@ const database = {
       once: (event) => {
         return new Promise((resolve) => {
           // Mock data for initial setup
-          let data = null
+          let data = null;
           if (path === "waterRotation") {
             data = {
               people: ["A", "B", "C", "D"],
               currentIndex: 0,
               history: [],
-            }
+            };
           } else if (path === "toothpasteRotation") {
             data = {
               people: ["A", "B", "C", "D"],
               currentIndex: 0,
               history: [],
-            }
+            };
           } else if (path === "dishwashRotation") {
             data = {
               people: ["A", "B", "C", "D"],
               currentIndex: 0,
               history: [],
-            }
+            };
           } else if (path === "debts") {
-            data = {}
+            data = {};
           } else if (path === "transactions") {
-            data = {}
+            data = {};
           }
           resolve({
             exists: () => data !== null,
             val: () => data,
-          })
-        })
+          });
+        });
       },
       set: (data) => {
         return new Promise((resolve) => {
-          console.log("Setting data:", data)
-          resolve()
-        })
+          console.log("Setting data:", data);
+          resolve();
+        });
       },
       update: (data) => {
         return new Promise((resolve) => {
-          console.log("Updating data:", data)
-          resolve()
-        })
+          console.log("Updating data:", data);
+          resolve();
+        });
       },
       child: (id) => {
         return {
           set: (value) => {
             return new Promise((resolve) => {
-              resolve()
-            })
+              resolve();
+            });
           },
           remove: () => {
             return new Promise((resolve) => {
-              resolve()
-            })
+              resolve();
+            });
           },
-        }
+        };
       },
-    }
+    };
   },
-}
+};
 
 // Danh sách thành viên
 const MEMBERS = {
   A: "Nguyễn Văn A",
   B: "Trần Thị B",
-  C: "Lê Văn C",
+  C: "Lê Minh",
   D: "Phạm Thị D",
-}
+};
 
 // Hàm tiện ích để format ngày tháng
 function formatDate(timestamp) {
-  const date = new Date(timestamp)
+  const date = new Date(timestamp);
   return date.toLocaleString("vi-VN", {
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
     hour: "2-digit",
     minute: "2-digit",
-  })
+  });
 }
 
 // Hàm tiện ích để format tiền tệ
@@ -108,7 +108,7 @@ function formatCurrency(amount) {
   return new Intl.NumberFormat("vi-VN", {
     style: "currency",
     currency: "VND",
-  }).format(amount)
+  }).format(amount);
 }
 
-export { database }
+export { database };
