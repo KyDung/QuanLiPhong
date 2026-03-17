@@ -198,7 +198,14 @@
 
               <div class="form-group">
                 <label for="amount">Số tiền (VNĐ):</label>
-                <input type="number" id="amount" required min="1000" />
+                <input
+                  type="text"
+                  id="amount"
+                  required
+                  inputmode="numeric"
+                  autocomplete="off"
+                  placeholder="Ví dụ: 1.200.000"
+                />
               </div>
 
               <div class="form-group">
@@ -332,11 +339,12 @@
                 </select>
 
                 <input
-                  type="number"
+                  type="text"
                   id="debtAmount"
                   placeholder="Số tiền trả"
                   required
-                  min="1000"
+                  inputmode="numeric"
+                  autocomplete="off"
                 />
 
                 <div class="form-row-buttons">
@@ -390,11 +398,12 @@
                 </select>
 
                 <input
-                  type="number"
+                  type="text"
                   id="loanAmount"
                   placeholder="Số tiền cho vay"
                   required
-                  min="1000"
+                  inputmode="numeric"
+                  autocomplete="off"
                 />
 
                 <div class="form-row-buttons">
@@ -479,6 +488,19 @@
           style: "currency",
           currency: "VND",
         }).format(amount);
+      }
+
+      function formatNumberInput(value) {
+        if (value === null || value === undefined) return "";
+        const digits = value.toString().replace(/\D/g, "");
+        if (!digits) return "";
+        return Number(digits).toLocaleString("vi-VN");
+      }
+
+      function parseNumberInput(value) {
+        if (!value) return 0;
+        const digits = value.toString().replace(/\D/g, "");
+        return digits ? parseInt(digits, 10) : 0;
       }
 
       // Tạo VietQR URL thật
@@ -1169,6 +1191,7 @@
           const expenseOffsetCustomContainer =
             document.getElementById("expenseOffsetCustom");
           const expenseSubmitBtn = document.getElementById("expenseSubmitBtn");
+          const moneyInputIds = ["amount", "debtAmount", "loanAmount"];
 
           const getSelectedSharedMembers = () => {
             const payer = document.getElementById("payer").value;
@@ -1299,6 +1322,13 @@
               });
             });
 
+          moneyInputIds.forEach((inputId) => {
+            const input = document.getElementById(inputId);
+            input.addEventListener("input", () => {
+              input.value = formatNumberInput(input.value);
+            });
+          });
+
           // Expense form
           document
             .getElementById("expenseForm")
@@ -1306,7 +1336,9 @@
               e.preventDefault();
 
               const itemName = document.getElementById("itemName").value;
-              const amount = parseInt(document.getElementById("amount").value);
+              const amount = parseNumberInput(
+                document.getElementById("amount").value,
+              );
               const payer = document.getElementById("payer").value;
               const sharedWith = getSelectedSharedMembers();
               const selectedOffsetMode = document.querySelector(
@@ -1326,6 +1358,11 @@
 
               if (sharedWith.length > 3) {
                 alert("Chỉ được chọn tối đa 3 người để chia tiền!");
+                return;
+              }
+
+              if (amount < 1000) {
+                alert("Số tiền phải từ 1.000 VNĐ trở lên!");
                 return;
               }
 
@@ -1395,12 +1432,17 @@
 
               const debtor = document.getElementById("debtor").value;
               const creditor = document.getElementById("creditor").value;
-              const amount = parseInt(
+              const amount = parseNumberInput(
                 document.getElementById("debtAmount").value,
               );
 
               if (debtor === creditor) {
                 alert("Người nợ và người cho nợ không thể giống nhau!");
+                return;
+              }
+
+              if (amount < 1000) {
+                alert("Số tiền phải từ 1.000 VNĐ trở lên!");
                 return;
               }
 
@@ -1424,12 +1466,17 @@
 
               const lender = document.getElementById("lender").value;
               const borrower = document.getElementById("borrower").value;
-              const amount = parseInt(
+              const amount = parseNumberInput(
                 document.getElementById("loanAmount").value,
               );
 
               if (lender === borrower) {
                 alert("Người cho vay và người vay không thể giống nhau!");
+                return;
+              }
+
+              if (amount < 1000) {
+                alert("Số tiền phải từ 1.000 VNĐ trở lên!");
                 return;
               }
 

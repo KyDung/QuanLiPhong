@@ -97,9 +97,7 @@ a {
 }
 
 header {
-  position: sticky;
-  top: 0;
-  z-index: 50;
+  position: relative;
   padding: 16px 16px 0;
 }
 
@@ -1177,6 +1175,10 @@ header {
 }
 
 @media (max-width: 640px) {
+  header {
+    padding: 10px 10px 0;
+  }
+
   .container,
   .debt-container {
     width: min(calc(100% - 20px), var(--container));
@@ -1185,19 +1187,30 @@ header {
   }
 
   .navbar {
-    gap: 12px;
+    gap: 10px;
+    padding: 12px;
+    border-radius: 20px;
   }
 
   .nav-brand {
     width: 100%;
   }
 
+  .nav-brand h2 {
+    font-size: 1rem;
+    text-align: center;
+  }
+
   .nav-menu {
     width: 100%;
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     justify-content: stretch;
-    gap: 8px;
+    gap: 6px;
+    padding: 6px;
+    border: 1px solid rgba(41, 86, 215, 0.08);
+    border-radius: 18px;
+    background: rgba(239, 244, 255, 0.7);
     overflow: visible;
   }
 
@@ -1208,17 +1221,19 @@ header {
   .nav-menu a {
     width: 100%;
     justify-content: center;
-    min-height: 42px;
-    padding: 8px 10px;
+    min-height: 38px;
+    padding: 7px 8px;
     white-space: normal;
     text-align: center;
-    line-height: 1.25;
-    font-size: 0.88rem;
-    border-radius: 14px;
+    line-height: 1.2;
+    font-size: 0.8rem;
+    border-radius: 12px;
+    box-shadow: none;
+    background: rgba(255, 255, 255, 0.78);
   }
 
   .nav-menu li:last-child:nth-child(odd) {
-    grid-column: 1 / -1;
+    grid-column: auto;
   }
 
   .welcome-section,
@@ -1276,6 +1291,23 @@ header {
 }
 
 @media (max-width: 440px) {
+  header {
+    padding: 8px 8px 0;
+  }
+
+  .navbar {
+    padding: 10px;
+    border-radius: 18px;
+  }
+
+  .nav-brand h2 {
+    font-size: 0.95rem;
+  }
+
+  .nav-menu {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .page-header h1 {
     font-size: 1.8rem;
   }
