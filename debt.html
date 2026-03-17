@@ -1179,6 +1179,28 @@
               .filter((person) => person !== payer);
           };
 
+          const syncPayerDependentOptions = () => {
+            const payer = document.getElementById("payer").value;
+
+            document
+              .querySelectorAll(".checkbox-group .share-checkbox")
+              .forEach((checkbox) => {
+                const isPayer = checkbox.value === payer;
+                checkbox.checked = isPayer ? false : checkbox.checked;
+                checkbox.disabled = isPayer;
+                checkbox.closest("label")?.classList.toggle("hidden", isPayer);
+              });
+
+            expenseOffsetCustomContainer
+              .querySelectorAll(".offset-checkbox")
+              .forEach((checkbox) => {
+                const isPayer = checkbox.value === payer;
+                checkbox.checked = isPayer ? false : checkbox.checked;
+                checkbox.disabled = isPayer;
+                checkbox.closest("label")?.classList.toggle("hidden", isPayer);
+              });
+          };
+
           const resetExpenseOffsetSelection = () => {
             document
               .querySelectorAll('input[name="expenseOffsetMode"]')
@@ -1265,6 +1287,7 @@
           });
 
           document.getElementById("payer").addEventListener("change", () => {
+            syncPayerDependentOptions();
             updateExpenseOffsetFlow();
           });
 
@@ -1361,6 +1384,7 @@
               });
             });
 
+          syncPayerDependentOptions();
           updateExpenseOffsetFlow();
 
           // Manual debt form
