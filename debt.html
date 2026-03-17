@@ -214,14 +214,100 @@
               <div class="form-group">
                 <label>Chia với (chọn tối đa 3 người):</label>
                 <div class="checkbox-group">
-                  <label><input type="checkbox" value="A" /> Dũng</label>
-                  <label><input type="checkbox" value="B" /> Quang</label>
-                  <label><input type="checkbox" value="C" /> Minh</label>
-                  <label><input type="checkbox" value="D" /> Cường</label>
+                  <label
+                    ><input class="share-checkbox" type="checkbox" value="A" />
+                    Dũng</label
+                  >
+                  <label
+                    ><input class="share-checkbox" type="checkbox" value="B" />
+                    Quang</label
+                  >
+                  <label
+                    ><input class="share-checkbox" type="checkbox" value="C" />
+                    Minh</label
+                  >
+                  <label
+                    ><input class="share-checkbox" type="checkbox" value="D" />
+                    Cường</label
+                  >
                 </div>
               </div>
 
-              <button type="submit" class="btn btn-primary">Chia tiền</button>
+              <div class="expense-submit-area">
+                <div class="form-group debt-offset-options hidden">
+                  <label>Tự động trừ vào nợ khi chia:</label>
+                  <p class="offset-hint">
+                    Chọn người được chia trước, rồi bắt buộc chọn một trong ba cách
+                    xử lý nợ này trước khi bấm chia tiền.
+                  </p>
+                  <div class="offset-mode-group">
+                    <label class="offset-mode-option">
+                      <input
+                        type="radio"
+                        name="expenseOffsetMode"
+                        value="none"
+                      />
+                      <span class="offset-option-card">
+                        <span class="offset-option-title">Không trừ tự động</span>
+                        <span class="offset-option-desc">
+                          Giữ nguyên toàn bộ nợ cũ, chỉ tạo khoản chia mới.
+                        </span>
+                      </span>
+                    </label>
+                    <label class="offset-mode-option">
+                      <input type="radio" name="expenseOffsetMode" value="all" />
+                      <span class="offset-option-card">
+                        <span class="offset-option-title">
+                          Trừ cho tất cả người được chia
+                        </span>
+                        <span class="offset-option-desc">
+                          Tự động bù trừ nếu đang có nợ chéo với người trả.
+                        </span>
+                      </span>
+                    </label>
+                    <label class="offset-mode-option">
+                      <input
+                        type="radio"
+                        name="expenseOffsetMode"
+                        value="custom"
+                      />
+                      <span class="offset-option-card">
+                        <span class="offset-option-title">Chọn riêng từng người</span>
+                        <span class="offset-option-desc">
+                          Chỉ bù trừ cho những người bạn chọn ở danh sách bên dưới.
+                        </span>
+                      </span>
+                    </label>
+                  </div>
+                  <div id="expenseOffsetCustom" class="offset-custom hidden">
+                    <label class="offset-custom-option">
+                      <input class="offset-checkbox" type="checkbox" value="A" />
+                      <span class="offset-person-chip">Dũng</span>
+                    </label>
+                    <label class="offset-custom-option">
+                      <input class="offset-checkbox" type="checkbox" value="B" />
+                      <span class="offset-person-chip">Quang</span>
+                    </label>
+                    <label class="offset-custom-option">
+                      <input class="offset-checkbox" type="checkbox" value="C" />
+                      <span class="offset-person-chip">Minh</span>
+                    </label>
+                    <label class="offset-custom-option">
+                      <input class="offset-checkbox" type="checkbox" value="D" />
+                      <span class="offset-person-chip">Cường</span>
+                    </label>
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  id="expenseSubmitBtn"
+                  class="btn btn-primary"
+                  disabled
+                >
+                  Chia tiền
+                </button>
+              </div>
             </form>
           </div>
 
@@ -256,6 +342,20 @@
                 <div class="form-row-buttons">
                   <button type="submit" class="btn btn-secondary">
                     Trừ nợ
+                  </button>
+                  <button
+                    type="button"
+                    id="netPairDebtBtn"
+                    class="btn btn-success"
+                  >
+                    ⚖️ Trừ nợ chéo 2 người
+                  </button>
+                  <button
+                    type="button"
+                    id="netAllDebtsBtn"
+                    class="btn btn-info"
+                  >
+                    ⚖️ Trừ toàn bộ nợ chéo
                   </button>
                   <button
                     type="button"
@@ -666,11 +766,26 @@
 
         async addExpense(expenseData) {
           try {
-            const { itemName, amount, payer, sharedWith } = expenseData;
+            const {
+              itemName,
+              amount,
+              payer,
+              sharedWith,
+              offsetMode = "none",
+              offsetMembers = [],
+            } = expenseData;
             const totalPeople = sharedWith.length + 1;
             const perPerson = Math.floor(amount / totalPeople);
 
             const transactionId = Date.now().toString();
+
+            const shouldOffsetFor = (person) => {
+              if (offsetMode === "all") return true;
+              if (offsetMode === "custom") return offsetMembers.includes(person);
+              return false;
+            };
+
+            const offsetApplied = [];
 
             const transaction = {
               id: transactionId,
@@ -680,22 +795,82 @@
               sharedWith: sharedWith,
               perPerson: perPerson,
               timestamp: Date.now(),
+              offsetMode,
+              offsetMembers,
             };
 
             await this.transactionsRef.child(transactionId).set(transaction);
 
             const debtUpdates = {};
+            const debtRemovals = [];
 
             sharedWith.forEach((person) => {
               if (person !== payer) {
                 const debtKey = `${person}_${payer}`;
+                const reverseDebtKey = `${payer}_${person}`;
                 const currentDebt = this.debts[debtKey] || 0;
-                debtUpdates[debtKey] = currentDebt + perPerson;
+                let remainingAmount = perPerson;
+
+                if (shouldOffsetFor(person)) {
+                  const reverseDebt = this.debts[reverseDebtKey] || 0;
+                  if (reverseDebt > 0) {
+                    const offsetAmount = Math.min(reverseDebt, perPerson);
+                    const reverseAfterOffset = reverseDebt - offsetAmount;
+                    remainingAmount = perPerson - offsetAmount;
+
+                    if (reverseAfterOffset === 0) {
+                      debtRemovals.push(reverseDebtKey);
+                    } else {
+                      debtUpdates[reverseDebtKey] = reverseAfterOffset;
+                    }
+
+                    offsetApplied.push({
+                      person,
+                      amount: offsetAmount,
+                    });
+                  }
+                }
+
+                if (remainingAmount > 0) {
+                  debtUpdates[debtKey] = currentDebt + remainingAmount;
+                }
               }
             });
 
+            if (debtRemovals.length > 0) {
+              await Promise.all(
+                debtRemovals.map((debtKey) => this.debtsRef.child(debtKey).remove()),
+              );
+            }
+
             if (Object.keys(debtUpdates).length > 0) {
               await this.debtsRef.update(debtUpdates);
+            }
+
+            if (offsetApplied.length > 0) {
+              const offsetTransactionId = `${Date.now()}_offset`;
+              const totalOffset = offsetApplied.reduce(
+                (sum, item) => sum + item.amount,
+                0,
+              );
+              const offsetDetail = offsetApplied
+                .map(
+                  (item) =>
+                    `${MEMBERS[payer].name} bù trừ với ${MEMBERS[item.person].name}: ${formatCurrency(item.amount)}`,
+                )
+                .join(" | ");
+
+              await this.transactionsRef.child(offsetTransactionId).set({
+                id: offsetTransactionId,
+                item: "Tự động trừ vào nợ khi chia",
+                amount: totalOffset,
+                payer,
+                sharedWith: offsetApplied.map((item) => item.person),
+                perPerson: totalOffset,
+                timestamp: Date.now(),
+                type: "system",
+                note: offsetDetail,
+              });
             }
 
             await this.loadData();
@@ -834,7 +1009,229 @@
           }
         }
 
+        async netPairDebt(member1, member2) {
+          try {
+            if (!member1 || !member2 || member1 === member2) {
+              alert("Vui lòng chọn 2 người khác nhau để trừ nợ chéo!");
+              return;
+            }
+
+            const debtKey1 = `${member1}_${member2}`;
+            const debtKey2 = `${member2}_${member1}`;
+
+            const debt1 = this.debts[debtKey1] || 0;
+            const debt2 = this.debts[debtKey2] || 0;
+
+            if (debt1 === 0 && debt2 === 0) {
+              alert("Hai người này hiện không có nợ chéo để trừ!");
+              return;
+            }
+
+            const netAmount = Math.abs(debt1 - debt2);
+            const offsetAmount = Math.min(debt1, debt2);
+
+            if (offsetAmount === 0) {
+              alert("Hai người này chỉ có nợ một chiều, không có khoản nợ chéo để trừ!");
+              return;
+            }
+
+            if (debt1 === debt2) {
+              await Promise.all([
+                this.debtsRef.child(debtKey1).remove(),
+                this.debtsRef.child(debtKey2).remove(),
+              ]);
+            } else if (debt1 > debt2) {
+              await Promise.all([
+                this.debtsRef.child(debtKey1).set(netAmount),
+                this.debtsRef.child(debtKey2).remove(),
+              ]);
+            } else {
+              await Promise.all([
+                this.debtsRef.child(debtKey2).set(netAmount),
+                this.debtsRef.child(debtKey1).remove(),
+              ]);
+            }
+
+            const transactionId = `${Date.now()}_net_pair`;
+            await this.transactionsRef.child(transactionId).set({
+              id: transactionId,
+              item: "Trừ nợ chéo 2 người",
+              amount: offsetAmount,
+              payer: member1,
+              sharedWith: [member2],
+              perPerson: offsetAmount,
+              timestamp: Date.now(),
+              type: "system",
+            });
+
+            await this.loadData();
+            this.updateDataStats();
+
+            alert(
+              `Đã trừ nợ chéo giữa ${MEMBERS[member1].name} và ${
+                MEMBERS[member2].name
+              }. Cấn trừ: ${formatCurrency(offsetAmount)}.`,
+            );
+          } catch (error) {
+            console.error("Lỗi trừ nợ chéo 2 người:", error);
+            alert("Có lỗi xảy ra: " + error.message);
+          }
+        }
+
+        async netAllMutualDebts() {
+          try {
+            const memberIds = Object.keys(MEMBERS);
+            const updates = {};
+            const removals = [];
+            let totalOffset = 0;
+            let pairCount = 0;
+
+            for (let i = 0; i < memberIds.length; i++) {
+              for (let j = i + 1; j < memberIds.length; j++) {
+                const member1 = memberIds[i];
+                const member2 = memberIds[j];
+                const debtKey1 = `${member1}_${member2}`;
+                const debtKey2 = `${member2}_${member1}`;
+                const debt1 = this.debts[debtKey1] || 0;
+                const debt2 = this.debts[debtKey2] || 0;
+
+                if (debt1 === 0 && debt2 === 0) {
+                  continue;
+                }
+
+                const offsetAmount = Math.min(debt1, debt2);
+                const netAmount = Math.abs(debt1 - debt2);
+                totalOffset += offsetAmount;
+
+                if (offsetAmount > 0) {
+                  pairCount += 1;
+                }
+
+                if (debt1 === debt2) {
+                  removals.push(debtKey1, debtKey2);
+                } else if (debt1 > debt2) {
+                  updates[debtKey1] = netAmount;
+                  removals.push(debtKey2);
+                } else {
+                  updates[debtKey2] = netAmount;
+                  removals.push(debtKey1);
+                }
+              }
+            }
+
+            if (pairCount === 0) {
+              alert("Hiện không có nợ chéo để trừ toàn bộ!");
+              return;
+            }
+
+            if (removals.length > 0) {
+              await Promise.all(
+                [...new Set(removals)].map((debtKey) =>
+                  this.debtsRef.child(debtKey).remove(),
+                ),
+              );
+            }
+
+            if (Object.keys(updates).length > 0) {
+              await this.debtsRef.update(updates);
+            }
+
+            const transactionId = `${Date.now()}_net_all`;
+            await this.transactionsRef.child(transactionId).set({
+              id: transactionId,
+              item: "Trừ toàn bộ nợ chéo",
+              amount: totalOffset,
+              payer: this.selectedMember,
+              sharedWith: memberIds,
+              perPerson: totalOffset,
+              timestamp: Date.now(),
+              type: "system",
+            });
+
+            await this.loadData();
+            this.updateDataStats();
+
+            alert(
+              `Đã trừ toàn bộ nợ chéo cho ${pairCount} cặp. Tổng cấn trừ: ${formatCurrency(
+                totalOffset,
+              )}.`,
+            );
+          } catch (error) {
+            console.error("Lỗi trừ toàn bộ nợ chéo:", error);
+            alert("Có lỗi xảy ra: " + error.message);
+          }
+        }
+
         setupEventListeners() {
+          const expenseOffsetContainer = document.querySelector(
+            ".debt-offset-options",
+          );
+          const expenseOffsetCustomContainer =
+            document.getElementById("expenseOffsetCustom");
+          const expenseSubmitBtn = document.getElementById("expenseSubmitBtn");
+
+          const getSelectedSharedMembers = () => {
+            const payer = document.getElementById("payer").value;
+            return Array.from(
+              document.querySelectorAll(".checkbox-group .share-checkbox:checked"),
+            )
+              .map((checkbox) => checkbox.value)
+              .filter((person) => person !== payer);
+          };
+
+          const resetExpenseOffsetSelection = () => {
+            document
+              .querySelectorAll('input[name="expenseOffsetMode"]')
+              .forEach((radio) => {
+                radio.checked = false;
+              });
+            expenseOffsetCustomContainer
+              .querySelectorAll(".offset-checkbox")
+              .forEach((checkbox) => {
+                checkbox.checked = false;
+              });
+            expenseOffsetCustomContainer.classList.add("hidden");
+          };
+
+          const updateExpenseSubmitState = () => {
+            const sharedWith = getSelectedSharedMembers();
+            const selectedOffsetMode = document.querySelector(
+              'input[name="expenseOffsetMode"]:checked',
+            );
+            const offsetMode = selectedOffsetMode?.value || "";
+            const offsetMembers = Array.from(
+              document.querySelectorAll("#expenseOffsetCustom .offset-checkbox:checked"),
+            )
+              .map((checkbox) => checkbox.value)
+              .filter((person) => person !== document.getElementById("payer").value);
+
+            const hasValidSharedMembers =
+              sharedWith.length > 0 && sharedWith.length <= 3;
+            const hasValidOffsetChoice =
+              !!selectedOffsetMode &&
+              (offsetMode !== "custom" || offsetMembers.length > 0);
+
+            expenseSubmitBtn.disabled =
+              !(hasValidSharedMembers && hasValidOffsetChoice);
+          };
+
+          const updateExpenseOffsetFlow = () => {
+            const sharedWith = getSelectedSharedMembers();
+            const shouldShowOffsetBlock =
+              sharedWith.length > 0 && sharedWith.length <= 3;
+
+            expenseOffsetContainer.classList.toggle(
+              "hidden",
+              !shouldShowOffsetBlock,
+            );
+
+            if (!shouldShowOffsetBlock) {
+              resetExpenseOffsetSelection();
+            }
+
+            updateExpenseSubmitState();
+          };
+
           // Member selection
           document.querySelectorAll(".member-item").forEach((item) => {
             item.addEventListener("click", (e) => {
@@ -867,6 +1264,18 @@
             this.exportReport();
           });
 
+          document.getElementById("payer").addEventListener("change", () => {
+            updateExpenseOffsetFlow();
+          });
+
+          document
+            .querySelectorAll(".checkbox-group .share-checkbox")
+            .forEach((checkbox) => {
+              checkbox.addEventListener("change", () => {
+                updateExpenseOffsetFlow();
+              });
+            });
+
           // Expense form
           document
             .getElementById("expenseForm")
@@ -876,8 +1285,13 @@
               const itemName = document.getElementById("itemName").value;
               const amount = parseInt(document.getElementById("amount").value);
               const payer = document.getElementById("payer").value;
-              const sharedWith = Array.from(
-                document.querySelectorAll('input[type="checkbox"]:checked'),
+              const sharedWith = getSelectedSharedMembers();
+              const selectedOffsetMode = document.querySelector(
+                'input[name="expenseOffsetMode"]:checked',
+              );
+              const offsetMode = selectedOffsetMode?.value || "none";
+              const offsetMembers = Array.from(
+                document.querySelectorAll("#expenseOffsetCustom input:checked"),
               )
                 .map((cb) => cb.value)
                 .filter((person) => person !== payer);
@@ -892,18 +1306,62 @@
                 return;
               }
 
+              if (!selectedOffsetMode) {
+                alert("Vui lòng chọn cách trừ nợ khi chia tiền!");
+                return;
+              }
+
+              if (offsetMode === "custom" && offsetMembers.length === 0) {
+                alert("Bạn đã chọn chia riêng, hãy chọn ít nhất một người để trừ nợ!");
+                return;
+              }
+
               this.addExpense({
                 itemName,
                 amount,
                 payer,
                 sharedWith,
+                offsetMode,
+                offsetMembers,
               });
 
               e.target.reset();
               document
-                .querySelectorAll('input[type="checkbox"]')
-                .forEach((cb) => (cb.checked = false));
+                .querySelectorAll('.checkbox-group .share-checkbox, #expenseOffsetCustom .offset-checkbox')
+                .forEach((cb) => {
+                  cb.checked = false;
+                });
+              resetExpenseOffsetSelection();
+              updateExpenseOffsetFlow();
             });
+
+          document
+            .querySelectorAll('input[name="expenseOffsetMode"]')
+            .forEach((radio) => {
+              radio.addEventListener("change", (e) => {
+                if (e.target.value === "custom") {
+                  expenseOffsetCustomContainer.classList.remove("hidden");
+                } else {
+                  expenseOffsetCustomContainer.classList.add("hidden");
+                  expenseOffsetCustomContainer
+                    .querySelectorAll(".offset-checkbox")
+                    .forEach((checkbox) => {
+                      checkbox.checked = false;
+                    });
+                }
+                updateExpenseSubmitState();
+              });
+            });
+
+          document
+            .querySelectorAll("#expenseOffsetCustom .offset-checkbox")
+            .forEach((checkbox) => {
+              checkbox.addEventListener("change", () => {
+                updateExpenseSubmitState();
+              });
+            });
+
+          updateExpenseOffsetFlow();
 
           // Manual debt form
           document
@@ -982,6 +1440,35 @@
 
               this.clearAllDebt(debtor, creditor);
             });
+
+          document.getElementById("netPairDebtBtn").addEventListener("click", () => {
+            const debtor = document.getElementById("debtor").value;
+            const creditor = document.getElementById("creditor").value;
+
+            if (!debtor || !creditor) {
+              alert("Vui lòng chọn đủ 2 người để trừ nợ chéo!");
+              return;
+            }
+
+            if (debtor === creditor) {
+              alert("Người nợ và người cho nợ phải khác nhau!");
+              return;
+            }
+
+            if (
+              confirm(
+                `Trừ nợ chéo giữa ${MEMBERS[debtor].name} và ${MEMBERS[creditor].name}?`,
+              )
+            ) {
+              this.netPairDebt(debtor, creditor);
+            }
+          });
+
+          document.getElementById("netAllDebtsBtn").addEventListener("click", () => {
+            if (confirm("Trừ toàn bộ các khoản nợ chéo hiện có?")) {
+              this.netAllMutualDebts();
+            }
+          });
         }
       }
 
@@ -1087,185 +1574,5 @@
       }
     </script>
 
-    <style>
-      /* Calculator Styles */
-      .calculator {
-        border-top: 2px solid #e2e8f0;
-        padding-top: 1rem;
-        margin-top: 1rem;
-      }
-
-      .calculator h4 {
-        color: #1e293b;
-        margin-bottom: 1rem;
-        font-size: 1.1rem;
-      }
-
-      .calc-display {
-        margin-bottom: 0.5rem;
-      }
-
-      .calc-display input {
-        width: 100%;
-        padding: 0.75rem;
-        border: 2px solid #e5e7eb;
-        border-radius: 8px;
-        font-size: 1.2rem;
-        text-align: right;
-        background: #f8fafc;
-        font-family: monospace;
-      }
-
-      .calc-buttons {
-        display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 0.25rem;
-      }
-
-      .calc-btn {
-        padding: 0.75rem;
-        border: none;
-        border-radius: 6px;
-        font-size: 1rem;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.2s ease;
-      }
-
-      .calc-number {
-        background: #f1f5f9;
-        color: #1e293b;
-      }
-
-      .calc-number:hover {
-        background: #e2e8f0;
-      }
-
-      .calc-operator {
-        background: #3b82f6;
-        color: white;
-      }
-
-      .calc-operator:hover {
-        background: #2563eb;
-      }
-
-      .calc-equals {
-        background: #10b981;
-        color: white;
-        grid-row: span 2;
-      }
-
-      .calc-equals:hover {
-        background: #059669;
-      }
-
-      .calc-clear {
-        background: #ef4444;
-        color: white;
-      }
-
-      .calc-clear:hover {
-        background: #dc2626;
-      }
-
-      .calc-zero {
-        grid-column: span 2;
-      }
-
-      .btn-danger {
-        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-        color: white;
-        margin-left: 0.5rem;
-      }
-
-      .btn-danger:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);
-      }
-
-      .btn-success {
-        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-        color: white;
-        margin-top: 0.5rem;
-        width: 100%;
-        font-size: 0.9rem;
-        padding: 0.6rem 1rem;
-      }
-
-      .btn-success:hover {
-        background: linear-gradient(135deg, #059669 0%, #047857 100%);
-        transform: translateY(-2px);
-        box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
-      }
-
-      /* Backup và Clear buttons trong data-management */
-      .data-management button {
-        margin: 0.25rem 0;
-        width: 100%;
-        font-size: 0.85rem;
-        padding: 0.6rem;
-      }
-
-      /* Download QR Button - STYLE MỚI */
-      .btn-download-qr {
-        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-        color: white;
-        border: none;
-        border-radius: 8px;
-        padding: 0.75rem 1.5rem;
-        font-size: 0.9rem;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.2s ease;
-        margin: 1rem 0;
-        width: 100%;
-      }
-
-      .btn-download-qr:hover {
-        background: linear-gradient(135deg, #059669 0%, #047857 100%);
-        transform: translateY(-2px);
-        box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
-      }
-
-      .btn-download-qr:active {
-        transform: translateY(0);
-      }
-
-      /* QR Section styling */
-      .qr-section {
-        text-align: center;
-        margin-top: 1rem;
-        padding-top: 1rem;
-        border-top: 1px solid #e2e8f0;
-      }
-
-      .qr-image {
-        width: 150px;
-        height: 150px;
-        border-radius: 8px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-        margin-bottom: 1rem;
-      }
-
-      .qr-note {
-        font-size: 0.8rem;
-        color: #64748b;
-        margin: 0.5rem 0 0 0;
-      }
-
-      /* Responsive */
-      @media (max-width: 768px) {
-        .qr-image {
-          width: 120px;
-          height: 120px;
-        }
-
-        .btn-download-qr {
-          padding: 0.6rem 1rem;
-          font-size: 0.8rem;
-        }
-      }
-    </style>
   </body>
 </html>
