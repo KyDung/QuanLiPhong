@@ -38,8 +38,8 @@
           <h3>Danh sách thành viên</h3>
           <div class="member-list" id="memberList"></div>
 
-          <div class="account-info">
-            <h4>💳 Thông tin tài khoản</h4>
+          <details class="account-info collapsible">
+            <summary><h4>💳 Thông tin tài khoản</h4></summary>
             <div id="selectedMemberAccount" class="account-details">
               <div class="account-item">
                 <label>Tên tài khoản:</label>
@@ -71,11 +71,11 @@
                 <p class="qr-note">Quét mã để chuyển tiền</p>
               </div>
             </div>
-          </div>
+          </details>
 
           <!-- Thêm phần quản lý dữ liệu -->
-          <div class="data-management">
-            <h4>Quản lý dữ liệu</h4>
+          <details class="data-management collapsible">
+            <summary><h4>🗂️ Quản lý dữ liệu</h4></summary>
             <button id="cleanupBtn" class="btn btn-warning">
               🗑️ Xóa dữ liệu cũ (>6 tháng)
             </button>
@@ -83,10 +83,10 @@
             <div class="data-stats">
               <small id="dataStats">Đang tải thống kê...</small>
             </div>
-          </div>
+          </details>
 
-          <div class="calculator">
-            <h4>🧮 Máy tính</h4>
+          <details class="calculator collapsible">
+            <summary><h4>🧮 Máy tính</h4></summary>
             <div class="calc-display">
               <input type="text" id="calcDisplay" readonly value="0" />
             </div>
@@ -157,7 +157,7 @@
                 .
               </button>
             </div>
-          </div>
+          </details>
         </div>
 
         <div class="main-content">

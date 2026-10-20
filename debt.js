@@ -945,8 +945,20 @@ class DebtManager {
   }
 }
 
+// Máy tính: luôn mở các khối phụ; điện thoại/máy tính bảng: thu gọn, bấm để mở
+function syncCollapsibles() {
+  const isDesktop = window.matchMedia("(min-width: 1181px)").matches;
+  document.querySelectorAll(".collapsible").forEach((el) => {
+    el.open = isDesktop;
+  });
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   renderMemberControls();
+  syncCollapsibles();
+  window
+    .matchMedia("(min-width: 1181px)")
+    .addEventListener("change", syncCollapsibles);
   debtManager = new DebtManager();
 });
 

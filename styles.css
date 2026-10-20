@@ -1605,3 +1605,84 @@ header {
     flex-wrap: wrap;
   }
 }
+
+/* Các khối phụ ở sidebar: thu gọn trên điện thoại, luôn mở trên máy tính */
+.collapsible > summary {
+  list-style: none;
+  cursor: pointer;
+}
+
+.collapsible > summary::-webkit-details-marker {
+  display: none;
+}
+
+.collapsible > summary h4 {
+  margin-bottom: 0;
+}
+
+.collapsible[open] > summary h4 {
+  margin-bottom: 12px;
+}
+
+.collapsible > summary::after {
+  content: "Hiện ▾";
+}
+
+@media (min-width: 1181px) {
+  .collapsible > summary {
+    pointer-events: none;
+    cursor: default;
+  }
+
+  .collapsible > summary::after {
+    content: none;
+  }
+}
+
+@media (max-width: 1180px) {
+  .collapsible > summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    min-height: 44px;
+  }
+
+  .collapsible > summary::after {
+    padding: 6px 14px;
+    border: 1px solid rgba(99, 102, 241, 0.35);
+    border-radius: 999px;
+    background: var(--primary-soft);
+    color: var(--primary-strong);
+    font-size: 0.85rem;
+    font-weight: 700;
+  }
+
+  .collapsible[open] > summary::after {
+    content: "Ẩn ▴";
+  }
+}
+
+@media (max-width: 640px) {
+  .sidebar {
+    padding: 16px;
+  }
+
+  .member-list {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .member-item {
+    justify-content: center;
+    padding: 10px 6px;
+  }
+
+  .member-item::before {
+    display: none;
+  }
+
+  .member-name {
+    font-size: 0.9rem;
+  }
+}
